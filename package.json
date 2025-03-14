@@ -9,9 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.5.13"
+    "p5": "^1.11.3",
+    "vue": "^3.5.13",
+    "web-flappy-bird": "file:"
   },
   "devDependencies": {
+    "@types/p5": "^1.7.6",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/tsconfig": "^0.7.0",
     "typescript": "~5.7.2",
