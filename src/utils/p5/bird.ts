@@ -1,6 +1,8 @@
 import type p5 from "p5";
+import type Pipe from "./pipe";
 
 export default class Bird {
+  p: p5;
   x: number;
   y: number;
   width: number;
@@ -9,8 +11,17 @@ export default class Bird {
   isFalling: boolean;
   jumpingTime: number;
   rotationAngle: number;
+  img: p5.Image | null;
 
-  constructor(x: number, y: number, width: number, height: number) {
+  constructor(
+    p: p5,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    img: p5.Image | null
+  ) {
+    this.p = p;
     this.x = x;
     this.y = y;
     this.width = width;
@@ -18,6 +29,7 @@ export default class Bird {
     this.isFalling = true;
     this.jumpingTime = 0;
     this.rotationAngle = 0;
+    this.img = img;
   }
 
   fly() {
@@ -28,14 +40,14 @@ export default class Bird {
     }
   }
 
-  startJumping(p: p5) {
+  startJumping() {
     this.isFalling = false;
-    this.jumpingTime = p.millis();
+    this.jumpingTime = this.p.millis();
   }
 
-  handleJumping(p: p5) {
-    if (!this.isFalling) {
-      const elapsedTime = p.millis() - this.jumpingTime;
+  handleJumping() {
+    if (!this.isFalling && !this.p.keyIsDown(32)) {
+      const elapsedTime = this.p.millis() - this.jumpingTime;
 
       if (elapsedTime >= 250) {
         this.reset();
@@ -48,18 +60,48 @@ export default class Bird {
     this.jumpingTime = 0;
   }
 
-  draw(img: p5.Image, p: p5) {
-    p.push();
-    p.imageMode(p.CENTER);
-    p.angleMode(p.DEGREES);
-    p.translate(this.x, this.y);
+  isOutOfBounds() {
+    return this.y - this.y / 2 < 0 || this.y + this.height / 2 > this.p.height;
+  }
+
+  hasTouched(pipe: Pipe) {
+    if (pipe.position === "up") {
+      if (this.y <= pipe.y + pipe.height / 2 + 25) {
+        if (
+          this.x >= pipe.x - pipe.width / 2 &&
+          this.x <= pipe.x + pipe.width / 2
+        ) {
+          return true;
+        }
+      }
+    } else {
+      if (this.y >= pipe.y + pipe.height / 2 - 25) {
+        if (
+          this.x >= pipe.x - pipe.width / 2 &&
+          this.x <= pipe.x + pipe.width / 2
+        ) {
+          return true;
+        }
+      }
+    }
+  }
+
+  draw() {
+    if (!this.img) {
+      return;
+    }
+
+    this.p.push();
+    this.p.imageMode(this.p.CENTER);
+    this.p.angleMode(this.p.DEGREES);
+    this.p.translate(this.x, this.y);
 
     const targetAngle = this.isFalling ? 45 : -45;
 
-    this.rotationAngle = p.lerp(this.rotationAngle, targetAngle, 0.25);
+    this.rotationAngle = this.p.lerp(this.rotationAngle, targetAngle, 0.25);
 
-    p.rotate(this.rotationAngle);
-    p.image(img, 0, 0, this.width, this.height);
-    p.pop();
+    this.p.rotate(this.rotationAngle);
+    this.p.image(this.img, 0, 0, this.width, this.height);
+    this.p.pop();
   }
 }

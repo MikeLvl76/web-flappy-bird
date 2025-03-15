@@ -24,8 +24,8 @@ export const sketch = (p: p5) => {
       -p.height / 1.75 - Math.floor(Math.random() * 30) * index;
 
     return [
-      new Pipe(xPosition, 0, 120, topHeight, "up"),
-      new Pipe(xPosition, p.height, 120, bottomHeight, "down"),
+      new Pipe(p, xPosition, 0, 120, topHeight, "up"),
+      new Pipe(p, xPosition, p.height, 120, bottomHeight, "down"),
     ];
   };
 
@@ -42,10 +42,10 @@ export const sketch = (p: p5) => {
   };
 
   p.setup = () => {
-    p.createCanvas(window.innerWidth * 0.8, window.innerHeight * 0.8);
+    p.createCanvas(window.innerWidth * 0.8, window.innerHeight * 0.9);
     p.frameRate(60);
     colorBackground(p);
-    bird = new Bird(p.width / 4, p.height / 2, 90, 60);
+    bird = new Bird(p, p.width / 4, p.height / 2, 90, 60, birdImg);
     pipes.push(...generatePipes(p));
   };
 
@@ -57,12 +57,19 @@ export const sketch = (p: p5) => {
     }
 
     bird.fly();
-    bird.handleJumping(p);
-    bird.draw(birdImg, p);
+    bird.handleJumping();
+    bird.draw();
+
+    if (bird.isOutOfBounds()) {
+      p.noLoop();
+    }
 
     pipes.forEach((pipe, index) => {
-      pipe.draw(p);
-      pipe.horizontalScroll(p, index);
+      pipe.draw();
+      pipe.horizontalScroll(index);
+      if (bird?.hasTouched(pipe)) {
+        p.noLoop();
+      }
     });
   };
 
@@ -70,7 +77,7 @@ export const sketch = (p: p5) => {
     if (!bird) return false;
 
     if (e.keyCode === 32 && bird.isFalling) {
-      bird.startJumping(p);
+      bird.startJumping();
     }
 
     return false;
