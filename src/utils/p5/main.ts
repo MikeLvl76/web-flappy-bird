@@ -1,4 +1,6 @@
 import type p5 from "p5";
+import Bird from "./bird";
+import imgUrl from "../../assets/bird.png";
 
 export const sketch = (p: p5) => {
   const colorBackground = (p: p5) => {
@@ -13,10 +15,36 @@ export const sketch = (p: p5) => {
     }
   };
 
-  p.setup = () => {
-    p.createCanvas(window.innerWidth * 0.8, window.innerHeight * 0.8);
-    colorBackground(p);
+  let bird: Bird | null = null;
+  let img: p5.Image | null = null;
+
+  p.preload = () => {
+    img = p.loadImage(imgUrl, undefined, (ev) => console.error(ev));
   };
 
-  p.draw = () => {};
+  p.setup = () => {
+    p.createCanvas(window.innerWidth * 0.8, window.innerHeight * 0.8);
+    p.frameRate(60);
+    colorBackground(p);
+    bird = new Bird(p.width / 4, p.height / 2, 90, 60);
+  };
+
+  p.draw = () => {
+    colorBackground(p);
+    if (bird && img) {
+      bird.fly();
+      bird.handleJumping(p);
+      bird.draw(img, p);
+    }
+  };
+
+  p.keyPressed = (e: { keyCode: number }) => {
+    if (!bird) return false;
+
+    if (e.keyCode === 32 && bird.isFalling) {
+      bird.startJumping(p);
+    }
+
+    return false;
+  };
 };
