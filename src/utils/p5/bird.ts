@@ -22,9 +22,9 @@ export default class Bird {
 
   fly() {
     if (this.isFalling) {
-      this.y += this.dy * 1.01;
+      this.y += this.dy * 1.3;
     } else {
-      this.y -= this.dy * 0.99;
+      this.y -= this.dy * 1.15;
     }
   }
 
@@ -37,7 +37,7 @@ export default class Bird {
     if (!this.isFalling) {
       const elapsedTime = p.millis() - this.jumpingTime;
 
-      if (elapsedTime >= 750) {
+      if (elapsedTime >= 250) {
         this.reset();
       }
     }

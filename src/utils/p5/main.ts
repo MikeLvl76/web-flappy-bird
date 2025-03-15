@@ -1,6 +1,7 @@
 import type p5 from "p5";
 import Bird from "./bird";
-import imgUrl from "../../assets/bird.png";
+import birdImgUrl from "../../assets/bird.png";
+import Pipe from "./pipe";
 
 export const sketch = (p: p5) => {
   const colorBackground = (p: p5) => {
@@ -15,11 +16,29 @@ export const sketch = (p: p5) => {
     }
   };
 
+  const createPipePair = (p: p5, index: number): Pipe[] => {
+    const xPosition = p.width / 2 + index * 300;
+
+    const topHeight = p.height / 1.75 - Math.floor(Math.random() * 50) * index;
+    const bottomHeight =
+      -p.height / 1.75 - Math.floor(Math.random() * 30) * index;
+
+    return [
+      new Pipe(xPosition, 0, 120, topHeight, "up"),
+      new Pipe(xPosition, p.height, 120, bottomHeight, "down"),
+    ];
+  };
+
+  const generatePipes = (p: p5): Pipe[] =>
+    Array.from({ length: 5 }, (_, k) => createPipePair(p, k)).flat();
+
   let bird: Bird | null = null;
-  let img: p5.Image | null = null;
+  let birdImg: p5.Image | null = null;
+
+  const pipes: Pipe[] = [];
 
   p.preload = () => {
-    img = p.loadImage(imgUrl, undefined, (ev) => console.error(ev));
+    birdImg = p.loadImage(birdImgUrl, undefined, (ev) => console.error(ev));
   };
 
   p.setup = () => {
@@ -27,15 +46,24 @@ export const sketch = (p: p5) => {
     p.frameRate(60);
     colorBackground(p);
     bird = new Bird(p.width / 4, p.height / 2, 90, 60);
+    pipes.push(...generatePipes(p));
   };
 
   p.draw = () => {
     colorBackground(p);
-    if (bird && img) {
-      bird.fly();
-      bird.handleJumping(p);
-      bird.draw(img, p);
+    if (!bird || !birdImg) {
+      p.noLoop();
+      return;
     }
+
+    bird.fly();
+    bird.handleJumping(p);
+    bird.draw(birdImg, p);
+
+    pipes.forEach((pipe, index) => {
+      pipe.draw(p);
+      pipe.horizontalScroll(p, index);
+    });
   };
 
   p.keyPressed = (e: { keyCode: number }) => {
