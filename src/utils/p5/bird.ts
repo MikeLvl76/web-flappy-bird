@@ -1,5 +1,5 @@
 import type p5 from "p5";
-import type Pipe from "./pipe";
+import type DualPipe from "./dual-pipe";
 
 export default class Bird {
   p: p5;
@@ -7,37 +7,50 @@ export default class Bird {
   y: number;
   width: number;
   height: number;
-  dy: number = 8;
+  offset: number;
   isFalling: boolean;
   jumpingTime: number;
   rotationAngle: number;
   img: p5.Image | null;
 
-  constructor(
-    p: p5,
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    img: p5.Image | null
-  ) {
+  constructor(p: p5) {
     this.p = p;
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
+    this.x = 0;
+    this.y = 0;
+    this.width = 0;
+    this.height = 0;
+    this.offset = 8;
     this.isFalling = true;
     this.jumpingTime = 0;
     this.rotationAngle = 0;
+    this.img = null;
+  }
+
+  setX(x: number) {
+    this.x = x;
+    return this;
+  }
+
+  setY(y: number) {
+    this.y = y;
+    return this;
+  }
+
+  setDimensions(w: number, h: number) {
+    this.width = w;
+    this.height = h;
+    return this;
+  }
+
+  setImg(img: p5.Image | null) {
     this.img = img;
+    return this;
   }
 
   fly() {
-    if (this.isFalling) {
-      this.y += this.dy * 1.3;
-    } else {
-      this.y -= this.dy * 1.15;
-    }
+    this.setY(
+      this.isFalling ? this.y + this.offset * 1.3 : this.y - this.offset * 1.15
+    );
   }
 
   startJumping() {
@@ -64,26 +77,20 @@ export default class Bird {
     return this.y - this.y / 2 < 0 || this.y + this.height / 2 > this.p.height;
   }
 
-  hasTouched(pipe: Pipe) {
-    if (pipe.position === "up") {
-      if (this.y <= pipe.y + pipe.height / 2 + 25) {
-        if (
-          this.x >= pipe.x - pipe.width / 2 &&
-          this.x <= pipe.x + pipe.width / 2
-        ) {
-          return true;
-        }
-      }
-    } else {
-      if (this.y >= pipe.y + pipe.height / 2 - 25) {
-        if (
-          this.x >= pipe.x - pipe.width / 2 &&
-          this.x <= pipe.x + pipe.width / 2
-        ) {
-          return true;
-        }
-      }
-    }
+  hasTouched(pipe: DualPipe) {
+    const { top, bottom } = pipe;
+
+    const hasTouchedTop =
+      this.y <= top.y + top.height / 2 + 25 &&
+      this.x >= top.x - top.width / 2 &&
+      this.x <= top.x + top.width / 2;
+
+    const hasTouchedBottom =
+      this.y >= bottom.y + bottom.height / 2 - 25 &&
+      this.x >= bottom.x - bottom.width / 2 &&
+      this.x <= bottom.x + bottom.width / 2;
+
+    return hasTouchedTop || hasTouchedBottom;
   }
 
   draw() {

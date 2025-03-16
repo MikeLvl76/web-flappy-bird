@@ -1,7 +1,7 @@
 import type p5 from "p5";
 import Bird from "./bird";
 import birdImgUrl from "../../assets/bird.png";
-import Pipe from "./pipe";
+import DualPipe from "./dual-pipe";
 
 export const sketch = (p: p5) => {
   const colorBackground = (p: p5) => {
@@ -16,26 +16,34 @@ export const sketch = (p: p5) => {
     }
   };
 
-  const createPipePair = (p: p5, index: number): Pipe[] => {
-    const xPosition = p.width / 2 + index * 300;
+  const createDualPipe = (p: p5, index: number): DualPipe => {
+    const top = {
+      x: p.width / 2 + index * 300,
+      y: 0,
+      width: 120,
+      height:
+        p.height / 1.75 -
+        Math.ceil(Math.random() * 50) * (Math.round(Math.random()) ? 1 : -1),
+    };
 
-    const topHeight = p.height / 1.75 - Math.floor(Math.random() * 50) * index;
-    const bottomHeight =
-      -p.height / 1.75 - Math.floor(Math.random() * 30) * index;
+    const bottom = {
+      x: top.x,
+      y: p.height,
+      width: top.width,
+      height:
+        -p.height / 2 -
+        Math.ceil(Math.random() * 50) * (Math.round(Math.random()) ? 1 : -1),
+    };
 
-    return [
-      new Pipe(p, xPosition, 0, 120, topHeight, "up"),
-      new Pipe(p, xPosition, p.height, 120, bottomHeight, "down"),
-    ];
+    return new DualPipe(p).setTop(top).setBottom(bottom);
   };
 
-  const generatePipes = (p: p5): Pipe[] =>
-    Array.from({ length: 5 }, (_, k) => createPipePair(p, k)).flat();
+  const generateDualPipes = (p: p5): DualPipe[] =>
+    Array.from({ length: 5 }, (_, k) => createDualPipe(p, k)).flat();
 
-  let bird: Bird | null = null;
+  const bird = new Bird(p);
+  const pipes: DualPipe[] = [];
   let birdImg: p5.Image | null = null;
-
-  const pipes: Pipe[] = [];
 
   p.preload = () => {
     birdImg = p.loadImage(birdImgUrl, undefined, (ev) => console.error(ev));
@@ -45,13 +53,17 @@ export const sketch = (p: p5) => {
     p.createCanvas(window.innerWidth * 0.8, window.innerHeight * 0.9);
     p.frameRate(60);
     colorBackground(p);
-    bird = new Bird(p, p.width / 4, p.height / 2, 90, 60, birdImg);
-    pipes.push(...generatePipes(p));
+    bird
+      .setX(p.width / 4)
+      .setY(p.height / 2)
+      .setDimensions(90, 60)
+      .setImg(birdImg);
+    pipes.push(...generateDualPipes(p));
   };
 
   p.draw = () => {
     colorBackground(p);
-    if (!bird || !birdImg) {
+    if (!birdImg) {
       p.noLoop();
       return;
     }
@@ -64,10 +76,10 @@ export const sketch = (p: p5) => {
       p.noLoop();
     }
 
-    pipes.forEach((pipe, index) => {
+    pipes.forEach((pipe) => {
       pipe.draw();
-      pipe.horizontalScroll(index);
-      if (bird?.hasTouched(pipe)) {
+      pipe.scroll();
+      if (bird.hasTouched(pipe)) {
         p.noLoop();
       }
     });
