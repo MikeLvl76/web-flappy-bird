@@ -93,6 +93,19 @@ export default class Bird {
     return hasTouchedTop || hasTouchedBottom;
   }
 
+  hasPassed(pipe: DualPipe) {
+    const { top } = pipe;
+
+    const passedX = this.x > top.x + top.width / 2 + 25;
+
+    if (passedX && !pipe.isPassed) {
+      pipe.isPassed = true;
+      return true;
+    }
+
+    return false;
+  }
+
   draw() {
     if (!this.img) {
       return;

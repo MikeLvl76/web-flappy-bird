@@ -13,6 +13,7 @@ export default class DualPipe {
   bottom: Pipe;
   horizontalScrollingSpeed: number;
   offset: number;
+  isPassed: boolean;
 
   constructor(p: p5) {
     this.p = p;
@@ -20,6 +21,7 @@ export default class DualPipe {
     this.bottom = { x: 0, y: 0, width: 0, height: 0 };
     this.horizontalScrollingSpeed = 0.2;
     this.offset = 20;
+    this.isPassed = false;
   }
 
   setTop(top: Pipe) {
@@ -42,6 +44,7 @@ export default class DualPipe {
         this.top.height +
           Math.ceil(Math.random() * 150) * (Math.round(Math.random()) ? 1 : -1)
       );
+      this.isPassed = false;
     }
 
     if (this.bottom.x + this.bottom.width / 2 <= 0) {
@@ -56,7 +59,7 @@ export default class DualPipe {
 
   draw() {
     const { top, bottom } = this;
-    this.p.stroke(0);
+    this.p.stroke(2);
     this.p.fill(0, 200, 0);
     this.p.rectMode(this.p.CENTER);
 

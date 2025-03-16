@@ -44,6 +44,8 @@ export const sketch = (p: p5) => {
   const bird = new Bird(p);
   const pipes: DualPipe[] = [];
   let birdImg: p5.Image | null = null;
+  let score: number;
+  let hasScored: boolean;
 
   p.preload = () => {
     birdImg = p.loadImage(birdImgUrl, undefined, (ev) => console.error(ev));
@@ -59,6 +61,8 @@ export const sketch = (p: p5) => {
       .setDimensions(90, 60)
       .setImg(birdImg);
     pipes.push(...generateDualPipes(p));
+    score = 0;
+    hasScored = false;
   };
 
   p.draw = () => {
@@ -79,10 +83,21 @@ export const sketch = (p: p5) => {
     pipes.forEach((pipe) => {
       pipe.draw();
       pipe.scroll();
+
       if (bird.hasTouched(pipe)) {
         p.noLoop();
       }
+      if (bird.hasPassed(pipe)) {
+        score++;
+      }
+      if (pipe.top.x + pipe.top.width < 0) {
+        pipe.isPassed = false;
+      }
     });
+
+    p.textSize(32);
+    p.fill(255, 0, 0);
+    p.text(`Score: ${score}`, 50, 50);
   };
 
   p.keyPressed = (e: { keyCode: number }) => {
