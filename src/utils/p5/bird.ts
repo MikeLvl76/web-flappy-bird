@@ -81,12 +81,12 @@ export default class Bird {
     const { top, bottom } = pipe;
 
     const hasTouchedTop =
-      this.y <= top.y + top.height / 2 + 25 &&
+      this.y <= top.y + top.height / 2 + 45 &&
       this.x >= top.x - top.width / 2 &&
       this.x <= top.x + top.width / 2;
 
     const hasTouchedBottom =
-      this.y >= bottom.y + bottom.height / 2 - 25 &&
+      this.y >= bottom.y + bottom.height / 2 - 45 &&
       this.x >= bottom.x - bottom.width / 2 &&
       this.x <= bottom.x + bottom.width / 2;
 
