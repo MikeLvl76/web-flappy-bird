@@ -39,7 +39,7 @@ export default class DualPipe {
     this.bottom.x -= this.offset * this.horizontalScrollingSpeed;
 
     if (this.top.x + this.top.width / 2 <= 0) {
-      this.top.x = this.p.width + this.top.width / 2;
+      this.top.x = this.p.width + this.p.width / 5;
       this.top.height = Math.abs(
         this.top.height +
           Math.ceil(Math.random() * 150) * (Math.round(Math.random()) ? 1 : -1)
@@ -48,7 +48,7 @@ export default class DualPipe {
     }
 
     if (this.bottom.x + this.bottom.width / 2 <= 0) {
-      this.bottom.x = this.p.width + this.bottom.width / 2;
+      this.bottom.x = this.top.x;
       this.bottom.height = -Math.abs(
         -this.p.height +
           this.top.height * 0.9 +

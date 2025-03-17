@@ -20,9 +20,9 @@ export const sketch = (p: p5) => {
     }
   };
 
-  const createDualPipe = (p: p5, index: number): DualPipe => {
+  const createDualPipe = (p: p5, gap: number): DualPipe => {
     const top = {
-      x: p.width / 2 + index * 300,
+      x: p.width / 2 + gap,
       y: 0,
       width: 120,
       height:
@@ -43,7 +43,9 @@ export const sketch = (p: p5) => {
   };
 
   const generateDualPipes = (p: p5): DualPipe[] =>
-    Array.from({ length: 5 }, (_, k) => createDualPipe(p, k)).flat();
+    Array.from({ length: 5 }, (_, k) =>
+      createDualPipe(p, (k * p.width) / 4)
+    ).flat();
 
   const init = () => {
     colorBackground(p);
