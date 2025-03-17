@@ -5,7 +5,7 @@ import birdFlapSound from "../../assets/flap.mp3";
 import scoringSound from "../../assets/point.mp3";
 import hitSound from "../../assets/hit.mp3";
 import DualPipe from "./dual-pipe";
-import { SoundPlayer } from "./sound-player";
+import { SoundPlayer, type SoundFile } from "./sound-player";
 
 export const sketch = (p: p5) => {
   const colorBackground = (p: p5) => {
@@ -143,9 +143,11 @@ export const sketch = (p: p5) => {
   const bird = new Bird(p);
   const pipes: DualPipe[] = [];
   let birdImg: p5.Image | null;
-  const flapSound = new SoundPlayer(birdFlapSound, 1);
-  const pointSound = new SoundPlayer(scoringSound, 1);
-  const dieSound = new SoundPlayer(hitSound, 1);
+  const soundPlayer = new SoundPlayer(
+    { name: "flap", path: birdFlapSound, volume: 1 } as SoundFile,
+    { name: "score", path: scoringSound, volume: 1 } as SoundFile,
+    { name: "hit", path: hitSound, volume: 1 } as SoundFile
+  );
   let score: number;
 
   p.preload = () => {
@@ -173,7 +175,7 @@ export const sketch = (p: p5) => {
       bird.draw();
 
       if (bird.isOutOfBounds()) {
-        dieSound.play();
+        soundPlayer.play("hit");
         saveScore();
         resetAll();
         menuScreen();
@@ -184,14 +186,14 @@ export const sketch = (p: p5) => {
         pipe.scroll();
 
         if (bird.hasTouched(pipe)) {
-          dieSound.play();
+          soundPlayer.play("hit");
           saveScore();
           resetAll();
           menuScreen();
         }
 
         if (bird.hasPassed(pipe)) {
-          pointSound?.play();
+          soundPlayer.play("score");
           score++;
         }
       });
@@ -207,7 +209,7 @@ export const sketch = (p: p5) => {
 
     if (e.keyCode === 32 && bird.isFalling && gameIsStarted) {
       bird.startJumping();
-      flapSound?.play();
+      soundPlayer.play("flap");
     }
 
     return false;

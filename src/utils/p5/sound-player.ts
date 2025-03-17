@@ -1,42 +1,66 @@
-// Copied from https://github.com/processing/p5.js/issues/4479#issuecomment-2357248803 because p5.sound doesn't work with Vite
+// Original version from https://github.com/processing/p5.js/issues/4479#issuecomment-2357248803 because p5.sound doesn't work with Vite and Vue
+
+export type SoundFile = {
+  name: string;
+  path: string;
+  volume: number;
+};
 
 export class SoundPlayer {
-  audioContext: AudioContext;
-  soundBuffer: AudioBuffer | null;
-  gainNode: GainNode;
+  private audioContext: AudioContext;
+  private soundBuffers: Map<string, AudioBuffer>;
+  private gainNodes: Map<string, GainNode>;
 
-  constructor(soundFile: string, volume = 0) {
+  constructor(...files: SoundFile[]) {
     this.audioContext = new window.AudioContext();
-    this.soundBuffer = null;
+    this.soundBuffers = new Map();
+    this.gainNodes = new Map();
 
-    // Create a GainNode and set the default volume to 50% (0.5)
-    this.gainNode = this.audioContext.createGain();
-    this.gainNode.gain.value = volume; // 50% volume
+    files.forEach(async (file) => {
+      const gainNode = this.audioContext.createGain();
+      gainNode.gain.value = file.volume;
+      gainNode.connect(this.audioContext.destination);
+      this.gainNodes.set(file.name, gainNode);
 
-    // Connect the GainNode to the audio context destination
-    this.gainNode.connect(this.audioContext.destination);
-
-    this.loadSound(soundFile);
+      // Load and store sound buffer
+      const buffer = await this.loadSound(file.path);
+      if (buffer) {
+        this.soundBuffers.set(file.name, buffer);
+      }
+    });
   }
 
-  // Load and decode the sound file
-  async loadSound(soundFile: string) {
-    const response = await fetch(soundFile);
-    const arrayBuffer = await response.arrayBuffer();
-    this.soundBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-  }
-
-  // Create and play a new AudioBufferSourceNode
-  play() {
-    if (this.soundBuffer) {
-      const source = this.audioContext.createBufferSource();
-      source.buffer = this.soundBuffer;
-      source.connect(this.gainNode); // Connect to the GainNode instead of destination
-      source.start(0); // Play the sound immediately
+  private async loadSound(soundFile: string): Promise<AudioBuffer | null> {
+    try {
+      const response = await fetch(soundFile);
+      const arrayBuffer = await response.arrayBuffer();
+      return await this.audioContext.decodeAudioData(arrayBuffer);
+    } catch (error) {
+      console.error(`Error loading sound: ${soundFile}`, error);
+      return null;
     }
   }
 
-  setVolume(volume: number) {
-    this.gainNode.gain.value = volume; // volume should be between 0.0 (mute) and 1.0 (full)
+  play(name: string) {
+    const buffer = this.soundBuffers.get(name);
+    const gainNode = this.gainNodes.get(name);
+
+    if (buffer && gainNode) {
+      const source = this.audioContext.createBufferSource();
+      source.buffer = buffer;
+      source.connect(gainNode);
+      source.start(0);
+    } else {
+      console.warn(`Sound "${name}" not found or not loaded yet.`);
+    }
+  }
+
+  setVolume(name: string, volume: number) {
+    const gainNode = this.gainNodes.get(name);
+    if (gainNode) {
+      gainNode.gain.value = Math.min(1, Math.max(0, volume)); // Clamp between 0 and 1
+    } else {
+      console.warn(`Volume adjustment failed: Sound "${name}" not found.`);
+    }
   }
 }
