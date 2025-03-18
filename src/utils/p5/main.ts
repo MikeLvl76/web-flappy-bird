@@ -1,11 +1,10 @@
 import p5 from "p5";
-import Bird from "./bird";
 import birdImgUrl from "../../assets/bird.png";
 import birdFlapSound from "../../assets/flap.mp3";
 import scoringSound from "../../assets/point.mp3";
 import hitSound from "../../assets/hit.mp3";
-import DualPipe from "./dual-pipe";
-import { SoundPlayer, type SoundFile } from "./sound-player";
+import { type SoundFile } from "./sound-player";
+import Game from "./game";
 
 export const sketch = (p: p5) => {
   const colorBackground = (p: p5) => {
@@ -20,55 +19,12 @@ export const sketch = (p: p5) => {
     }
   };
 
-  const createDualPipe = (p: p5, gap: number): DualPipe => {
-    const top = {
-      x: p.width / 2 + gap,
-      y: 0,
-      width: 120,
-      height:
-        p.height / 1.75 -
-        Math.ceil(Math.random() * 50) * (Math.round(Math.random()) ? 1 : -1),
-    };
-
-    const bottom = {
-      x: top.x,
-      y: p.height,
-      width: top.width,
-      height:
-        -p.height / 2 -
-        Math.ceil(Math.random() * 50) * (Math.round(Math.random()) ? 1 : -1),
-    };
-
-    return new DualPipe(p).setTop(top).setBottom(bottom);
-  };
-
-  const generateDualPipes = (p: p5): DualPipe[] =>
-    Array.from({ length: 5 }, (_, k) =>
-      createDualPipe(p, (k * p.width) / 4)
-    ).flat();
-
-  const init = () => {
-    colorBackground(p);
-    bird
-      .setX(p.width / 4)
-      .setY(p.height / 2)
-      .setDimensions(90, 60)
-      .setImg(birdImg);
-    pipes.push(...generateDualPipes(p));
-    score = 0;
-  };
-
-  const resetAll = () => {
-    colorBackground(p);
-    bird
-      .setX(p.width / 4)
-      .setY(p.height / 2)
-      .setDimensions(90, 60)
-      .setImg(birdImg);
-    pipes.splice(0, pipes.length, ...generateDualPipes(p));
-    score = 0;
-    gameIsStarted = false;
-  };
+  const game = new Game(
+    p,
+    { name: "flap", path: birdFlapSound, volume: 1 } as SoundFile,
+    { name: "score", path: scoringSound, volume: 1 } as SoundFile,
+    { name: "hit", path: hitSound, volume: 1 } as SoundFile
+  );
 
   const menuScreen = () => {
     if (!p.isLooping()) {
@@ -80,21 +36,12 @@ export const sketch = (p: p5) => {
     p.textSize(64);
     p.text("Play", p.width / 2, p.height / 2);
 
-    const item = localStorage.getItem("score");
-    if (item) {
-      const parsed = JSON.parse(item);
+    const score = game.getFromStore();
+    if (score) {
       p.textSize(48);
-      p.text(
-        `Your score: ${parsed.playerScore}`,
-        p.width / 2,
-        p.height / 2 + 150
-      );
+      p.text(`Last score: ${score.last}`, p.width / 2, p.height / 2 + 150);
       p.textSize(32);
-      p.text(
-        `Best score: ${parsed.bestScore}`,
-        p.width / 2,
-        p.height / 2 + 200
-      );
+      p.text(`Best score: ${score.best}`, p.width / 2, p.height / 2 + 200);
     }
 
     if (
@@ -105,52 +52,14 @@ export const sketch = (p: p5) => {
     ) {
       p.cursor(p.HAND);
       if (p.mouseIsPressed) {
-        gameIsStarted = true;
+        game.state.hasStarted = true;
       }
     } else {
       p.cursor(p.ARROW);
     }
   };
 
-  const saveScore = () => {
-    const item = localStorage.getItem("score");
-    if (!item) {
-      localStorage.setItem(
-        "score",
-        JSON.stringify({ playerScore: score, bestScore: score })
-      );
-    } else {
-      const parsedItem = JSON.parse(item);
-      Object.assign(parsedItem, {
-        playerScore: score,
-        bestScore: score > parsedItem.bestScore ? score : parsedItem.bestScore,
-      });
-      localStorage.setItem("score", JSON.stringify(parsedItem));
-    }
-  };
-
-  const displayScore = () => {
-    p.rectMode(p.CENTER);
-    p.noStroke();
-    p.fill(255, 255, 255, 80);
-    p.rect(100, 40, 1.1 * p.textWidth(`Score: ${score}`), 50);
-
-    p.textAlign(p.CENTER);
-    p.textSize(32);
-    p.fill(0);
-    p.text(`Score: ${score}`, 100, 50);
-  };
-
-  let gameIsStarted: boolean;
-  const bird = new Bird(p);
-  const pipes: DualPipe[] = [];
   let birdImg: p5.Image | null;
-  const soundPlayer = new SoundPlayer(
-    { name: "flap", path: birdFlapSound, volume: 1 } as SoundFile,
-    { name: "score", path: scoringSound, volume: 1 } as SoundFile,
-    { name: "hit", path: hitSound, volume: 1 } as SoundFile
-  );
-  let score: number;
 
   p.preload = () => {
     birdImg = p.loadImage(birdImgUrl);
@@ -159,59 +68,60 @@ export const sketch = (p: p5) => {
   p.setup = () => {
     p.createCanvas(window.innerWidth * 0.8, window.innerHeight * 0.9);
     p.frameRate(60);
-    init();
-    gameIsStarted = false;
+    if (!birdImg) {
+      p.noLoop();
+      alert("An error has occured");
+      throw new Error("Image has not loaded");
+    }
+    game.generateBird(birdImg);
+    game.generateDualPipes();
   };
 
   p.draw = () => {
-    if (gameIsStarted) {
+    if (game.state.hasStarted && game.bird && birdImg) {
       colorBackground(p);
       p.smooth();
-      if (!birdImg) {
-        p.noLoop();
-        return;
-      }
 
-      bird.fly();
-      bird.handleJumping();
-      bird.draw();
+      game.bird.fly();
+      game.bird.handleJumping();
+      game.bird.draw();
 
-      if (bird.isOutOfBounds()) {
-        soundPlayer.play("hit");
-        saveScore();
-        resetAll();
+      if (game.bird.isOutOfBounds()) {
+        game.playSound("hit");
+        game.storeScore();
+        game.reset();
         menuScreen();
       }
 
-      pipes.forEach((pipe) => {
+      game.dualPipes.forEach((pipe) => {
         pipe.draw();
         pipe.scroll();
 
-        if (bird.hasTouched(pipe)) {
-          soundPlayer.play("hit");
-          saveScore();
-          resetAll();
+        if (game.bird?.hasTouched(pipe)) {
+          game.playSound("hit");
+          game.storeScore();
+          game.reset();
           menuScreen();
         }
 
-        if (bird.hasPassed(pipe)) {
-          soundPlayer.play("score");
-          score++;
+        if (game.bird?.hasPassed(pipe)) {
+          game.playSound("score");
+          game.increaseScore();
         }
       });
 
-      displayScore();
+      game.drawScore();
     } else {
       menuScreen();
     }
   };
 
   p.keyPressed = (e: { keyCode: number }) => {
-    if (!bird) return false;
+    if (!game.bird) return false;
 
-    if (e.keyCode === 32 && bird.isFalling && gameIsStarted) {
-      bird.startJumping();
-      soundPlayer.play("flap");
+    if (e.keyCode === 32 && game.bird.isFalling && game.state.hasStarted) {
+      game.bird.startJumping();
+      game.playSound("flap");
     }
 
     return false;

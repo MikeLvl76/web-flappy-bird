@@ -11,9 +11,9 @@ export default class Bird {
   isFalling: boolean;
   jumpingTime: number;
   rotationAngle: number;
-  img: p5.Image | null;
+  img: p5.Image;
 
-  constructor(p: p5) {
+  constructor(p: p5, img: p5.Image) {
     this.p = p;
     this.x = 0;
     this.y = 0;
@@ -23,7 +23,7 @@ export default class Bird {
     this.isFalling = true;
     this.jumpingTime = 0;
     this.rotationAngle = 0;
-    this.img = null;
+    this.img = img;
   }
 
   setX(x: number) {
@@ -42,7 +42,7 @@ export default class Bird {
     return this;
   }
 
-  setImg(img: p5.Image | null) {
+  setImg(img: p5.Image) {
     this.img = img;
     return this;
   }
@@ -66,11 +66,6 @@ export default class Bird {
         this.reset();
       }
     }
-  }
-
-  reset() {
-    this.isFalling = true;
-    this.jumpingTime = 0;
   }
 
   isOutOfBounds() {
@@ -123,5 +118,10 @@ export default class Bird {
     this.p.rotate(this.rotationAngle);
     this.p.image(this.img, 0, 0, this.width, this.height);
     this.p.pop();
+  }
+
+  private reset() {
+    this.isFalling = true;
+    this.jumpingTime = 0;
   }
 }
