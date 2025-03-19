@@ -39,22 +39,37 @@ export default class DualPipe {
     this.bottom.x -= this.offset * this.horizontalScrollingSpeed;
 
     if (this.top.x + this.top.width / 2 <= 0) {
-      this.top.x = this.p.width + this.p.width / 5;
-      this.top.height = Math.abs(
-        this.top.height +
-          Math.ceil(Math.random() * 150) * (Math.round(Math.random()) ? 1 : -1)
+      this.adjust(
+        this.p.width + this.p.width / 5,
+        Math.abs(
+          this.top.height +
+            Math.ceil(Math.random() * 150) *
+              (Math.round(Math.random()) ? 1 : -1)
+        ),
+        -Math.abs(
+          -this.p.height +
+            this.top.height * 0.9 +
+            Math.ceil(Math.random() * 150) *
+              (Math.round(Math.random()) ? 1 : -1)
+        )
       );
       this.isPassed = false;
     }
+  }
 
-    if (this.bottom.x + this.bottom.width / 2 <= 0) {
-      this.bottom.x = this.top.x;
-      this.bottom.height = -Math.abs(
-        -this.p.height +
-          this.top.height * 0.9 +
-          Math.ceil(Math.random() * 150) * (Math.round(Math.random()) ? 1 : -1)
-      );
-    }
+  adjust(x: number, topHeight: number, bottomHeight: number) {
+    this.setTop({
+      x,
+      y: this.top.y,
+      width: this.top.width,
+      height: topHeight,
+    });
+    this.setBottom({
+      x,
+      y: this.bottom.y,
+      width: this.bottom.width,
+      height: bottomHeight,
+    });
   }
 
   draw() {
